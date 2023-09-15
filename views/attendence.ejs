@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Attendance</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .btn-logout {
+            float: right;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .calendar-day {
+            padding: 8px;
+            background-color: #eee;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .calendar-day.attended {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #cal {
+            width: 100px;
+            padding-left: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="logout" class="btn btn-secondary btn-logout">Logout</a>
+        <h2>Teacher Attendance Sheet</h2>
+        <form action="attendenc" method="post">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Teachers Name</th>
+                        <th>Subject</th>
+                        <th>Email</th>
+                        <th><input type="text" name="date" id="dateOutput" hidden>
+                            <input type="text" id="dateOutputfalse" disabled style="border: none;">
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <%= username %>
+                        </td>
+                        <td>
+                            <%= subject %>
+                        </td>
+                        <td>
+                            <input type="text" name="Email" class="email" hidden>
+                            <input type="text" value="<%=email%>" disabled style="border: none;">
+                        </td>
+                        <td><button class="btn btn-primary" type="submit">Add Attendance</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <div class="container" id="cal">
+        <h2 id="yearField"></h2>
+        <div class="d-flex justify-content-between" style="width: 300px;">
+            <button id="backbtn" class="btn btn-dark">&lt;</button>
+            <h4 id="month" class="text-success">January</h4>
+            <button id="forwordbtn" class="btn btn-dark">&gt;</button>
+        </div>
+        <div>
+
+        </div>
+        <div id="calendar"></div>
+    </div>
+</body>
+<script>
+    document.querySelector(".email").value = "<%=email%>"
+    let attendance = "<%=day%>"
+    let strToArray = attendance.split(',');
+    let first = []
+    let mid = []
+    let last = []    
+
+    strToArray.forEach(element => {
+        datesplit = element.split("-")
+        first.push(datesplit[0])
+        mid.push(datesplit[1])
+        last.push(datesplit[2])
+    });
+    console.log(first)
+    console.log(mid)
+    console.log(last)
+
+    
+    const date = new Date();
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    let year = date.getFullYear();
+    const tday = day + "-" + month + "-" + year
+    document.getElementById("dateOutput").value = day + "-" + month + "-" + year
+    document.getElementById("dateOutputfalse").value = day + "-" + month + "-" + year
+    document.getElementById("yearField").innerText = year
+
+
+    const back = document.getElementById("backbtn")
+    const forward = document.getElementById("forwordbtn")
+    const monthText = document.getElementById('month');
+    let currentMonth = date.getMonth();
+    let s = ""
+    back.addEventListener('click', () => {
+        currentMonth = (currentMonth - 1 + 12) % 12;
+        monthText.textContent = arr[currentMonth];
+        fetchCalendarData(year, arr[currentMonth]);
+    });
+
+    forward.addEventListener('click', () => {
+        currentMonth = (currentMonth + 1) % 12;
+        monthText.textContent = arr[currentMonth];
+        fetchCalendarData(year, arr[currentMonth]);
+    });
+
+    const arr = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    monthText.textContent = arr[currentMonth];
+
+
+    function fetchCalendarData(year, month) {
+        const apiUrl = 'http://127.0.0.1:8000/calendar/' + year + '/';
+        let jsonData = {}
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                let calenderData = data[year]
+                // const monthsArray = Object.keys(calenderData);
+                Object.keys(calenderData).forEach(key => {
+                    let value = calenderData[key]
+                    if (key === month) {
+                        let s = ""; 
+                        s = value + "  "
+                        document.getElementById("calendar").innerHTML = s;
+                    }
+                    for (first in value){
+                        document.getElementById("calendar").style.color = "sky"
+                    }
+
+                })
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            });
+    }
+</script>
+</html>
